@@ -1,0 +1,63 @@
+#######################################
+# Syntax Coloring Map for RoboServo
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+RoboServo	KEYWORD1
+RoboServoGroup	KEYWORD1
+RoboServoType	KEYWORD1
+RoboServoUtils	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+attach	KEYWORD2
+detach	KEYWORD2
+attached	KEYWORD2
+write	KEYWORD2
+writeMicroseconds	KEYWORD2
+read	KEYWORD2
+readMicroseconds	KEYWORD2
+setServoType	KEYWORD2
+getServoType	KEYWORD2
+setPulseLimits	KEYWORD2
+getPin	KEYWORD2
+getChannel	KEYWORD2
+getMinPulse	KEYWORD2
+getMaxPulse	KEYWORD2
+stop	KEYWORD2
+setSpeed	KEYWORD2
+release	KEYWORD2
+addServo	KEYWORD2
+removeServo	KEYWORD2
+removeAll	KEYWORD2
+count	KEYWORD2
+getServo	KEYWORD2
+writeAll	KEYWORD2
+writeAllMicroseconds	KEYWORD2
+writeMultiple	KEYWORD2
+writeMultipleMicroseconds	KEYWORD2
+detachAll	KEYWORD2
+stopAll	KEYWORD2
+mapValue	KEYWORD2
+constrainValue	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
+
+SERVO_TYPE_180	LITERAL1
+SERVO_TYPE_270	LITERAL1
+SERVO_TYPE_360	LITERAL1
+ROBOSERVO_MAX_SERVOS	LITERAL1
+ROBOSERVO_INVALID_SERVO	LITERAL1
+ROBOSERVO_DEFAULT_FREQUENCY	LITERAL1
+ROBOSERVO_PWM_RESOLUTION	LITERAL1
+ROBOSERVO_DEFAULT_MIN_PULSE_US	LITERAL1
+ROBOSERVO_DEFAULT_MAX_PULSE_US	LITERAL1
+ROBOSERVO_DEFAULT_CENTER_PULSE_US	LITERAL1
+ROBOSERVO_PERIOD_US	LITERAL1
