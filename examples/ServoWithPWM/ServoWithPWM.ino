@@ -1,8 +1,8 @@
 /**
  * ServoWithPWM.ino - Using RoboServo with LED PWM (no timer conflicts)
  * 
- * Key: Use ledcAttach() for LED instead of analogWrite().
- * RoboServo uses 50Hz, analogWrite uses 1000Hz - different timers = safe.
+ * ESP32: Use ledcAttach() for LED instead of analogWrite().
+ * ESP8266: Call analogWrite() on the LED pin BEFORE servo.attach().
  * 
  * Servo: GPIO 13, LED: GPIO 2
  */
@@ -19,12 +19,17 @@ int fadeDir = 5;
 void setup() {
     Serial.begin(115200);
     
+#if defined(ESP8266)
+    // ESP8266: initialize LED PWM before servo attach (shared timer)
+    analogWrite(LED_PIN, 0);
+#else
+    // ESP32: use ledcAttach for LED (recommended over analogWrite)
+    ledcAttach(LED_PIN, 5000, 8);  // 5kHz, 8-bit
+#endif
+
     // Attach servo
     servo.attach(SERVO_PIN);
     servo.write(90);
-    
-    // Use ledcAttach for LED (recommended over analogWrite)
-    ledcAttach(LED_PIN, 5000, 8);  // 5kHz, 8-bit
     
     Serial.println("Servo + LED PWM demo");
 }
@@ -41,14 +46,21 @@ void loop() {
     // Fade LED
     brightness += fadeDir;
     if (brightness >= 255 || brightness <= 0) fadeDir = -fadeDir;
+#if defined(ESP8266)
+    analogWrite(LED_PIN, brightness);
+#else
     ledcWrite(LED_PIN, brightness);
+#endif
     
     delay(15);
 }
 
 /*
  * Timer conflict tips:
- * - Use ledcAttach() + ledcWrite() instead of analogWrite()
- * - Or call analogWrite() BEFORE servo.attach()
- * - Different frequencies auto-use different timers
+ * ESP32:
+ *   - Use ledcAttach() + ledcWrite() instead of analogWrite()
+ *   - Or call analogWrite() BEFORE servo.attach()
+ *   - Different frequencies auto-use different timers
+ * ESP8266:
+ *   - All PWM shares one frequency — call analogWrite() before servo.attach()
  */

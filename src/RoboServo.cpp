@@ -7,6 +7,7 @@
  */
 
 #include "RoboServo.h"
+#include "RoboPwmBackend.h"
 
 // =============================================================================
 // Platform-specific includes and variables
@@ -60,30 +61,7 @@ void RoboServo::initTimer() {
 }
 
 bool RoboServo::isValidPwmPin(int pin) {
-    if (pin < 0) return false;
-    
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
-    // ESP8266: GPIO 0-16 can do PWM (except GPIO 6-11 which are flash pins)
-    return (pin >= 0 && pin <= 5) || (pin >= 12 && pin <= 16);
-#elif defined(CONFIG_IDF_TARGET_ESP32P4)
-    // ESP32-P4: GPIO 0-54 (excluding some reserved pins)
-    return (pin >= 0 && pin <= 54) && (pin != 24) && (pin != 25);
-#elif defined(CONFIG_IDF_TARGET_ESP32S3)
-    return (pin >= 1 && pin <= 21) || (pin >= 35 && pin <= 45) || (pin == 47) || (pin == 48);
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-    return (pin >= 1 && pin <= 21) || (pin == 26) || (pin >= 33 && pin <= 42);
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-    return (pin >= 0 && pin <= 10) || (pin >= 18 && pin <= 21);
-#elif defined(CONFIG_IDF_TARGET_ESP32C6)
-    return (pin >= 0 && pin <= 23);
-#elif defined(CONFIG_IDF_TARGET_ESP32H2)
-    return (pin >= 0 && pin <= 14) || (pin >= 25 && pin <= 27);
-#elif defined(CONFIG_IDF_TARGET_ESP32)
-    return (pin == 2) || (pin == 4) || (pin == 5) || (pin >= 12 && pin <= 19) ||
-           (pin >= 21 && pin <= 23) || (pin >= 25 && pin <= 27) || (pin == 32) || (pin == 33);
-#else
-    return (pin >= 0 && pin <= 48);
-#endif
+    return RoboPwmBackend::isValidPwmPin(pin);
 }
 
 uint8_t RoboServo::allocateChannel() {
@@ -146,6 +124,7 @@ uint8_t RoboServo::attach(int pin, int minPulseUs, int maxPulseUs, RoboServoType
     }
     
     if (pin < 0 || !isValidPwmPin(pin)) return ROBOSERVO_INVALID_SERVO;
+    if (RoboPwmBackend::isPinInUse(pin)) return ROBOSERVO_INVALID_SERVO;
     
     // Validate and store frequency
     _frequency = RoboServoUtils::constrainValue(frequency, ROBOSERVO_MIN_FREQUENCY, ROBOSERVO_MAX_FREQUENCY);
@@ -196,6 +175,7 @@ uint8_t RoboServo::attach(int pin, int minPulseUs, int maxPulseUs, RoboServoType
     ledcWrite(_channel, duty);
 #endif
     
+    RoboPwmBackend::markPinUsed(_pin);
     return _channel;
 }
 
@@ -214,6 +194,7 @@ void RoboServo::detach() {
 #endif
     
     releaseChannel(_channel);
+    RoboPwmBackend::markPinFree(_pin);
     _pin = -1;
     _channel = ROBOSERVO_INVALID_SERVO;
     _currentPulseUs = 0;
@@ -288,13 +269,21 @@ int RoboServo::getMinPulse() const { return _minPulseUs; }
 int RoboServo::getMaxPulse() const { return _maxPulseUs; }
 
 void RoboServo::setFrequency(int frequency) {
-    _frequency = RoboServoUtils::constrainValue(frequency, ROBOSERVO_MIN_FREQUENCY, ROBOSERVO_MAX_FREQUENCY);
+    frequency = RoboServoUtils::constrainValue(frequency, ROBOSERVO_MIN_FREQUENCY, ROBOSERVO_MAX_FREQUENCY);
+    if (frequency == _frequency) return;
+
+    _frequency = frequency;
     if (_attached) {
-        // Re-attach with new frequency
+        int savedPin = _pin;
         int savedPulse = _currentPulseUs;
+        int savedMin = _minPulseUs;
+        int savedMax = _maxPulseUs;
+        RoboServoType savedType = _servoType;
+
         detach();
-        attach(_pin, _minPulseUs, _maxPulseUs, _servoType, _frequency);
-        writeMicroseconds(savedPulse);
+        if (attach(savedPin, savedMin, savedMax, savedType, _frequency) != ROBOSERVO_INVALID_SERVO) {
+            writeMicroseconds(savedPulse);
+        }
     }
 }
 
