@@ -4,7 +4,7 @@
     <strong>A lightweight servo control library for ESP32 and ESP8266</strong>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/version-1.1.0-blue?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/version-1.1.2-blue?style=flat-square" alt="Version">
     <img src="https://img.shields.io/badge/ESP32-supported-blue?style=flat-square" alt="ESP32">
     <img src="https://img.shields.io/badge/ESP32--S2/S3-supported-blue?style=flat-square" alt="ESP32-S2/S3">
     <img src="https://img.shields.io/badge/ESP32--C3/C6/H2-supported-blue?style=flat-square" alt="ESP32-C3/C6/H2">
@@ -46,12 +46,15 @@
 
 ### Installation
 
-**Arduino IDE:**  
+**Arduino IDE 2.x (Library Manager):**  
+Select an **ESP32** or **ESP8266** board, then `Tools` → `Manage Libraries…` → search **RoboServo** → Install.
+
+**Arduino IDE (ZIP):**  
 `Sketch` → `Include Library` → `Add .ZIP Library...`
 
 **PlatformIO:**
 ```ini
-lib_deps = RoboServo
+lib_deps = https://github.com/dunknowcoding/RoboServo.git#v1.1.2
 ```
 
 ### Basic Example
