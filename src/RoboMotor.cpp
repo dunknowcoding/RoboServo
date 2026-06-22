@@ -75,7 +75,10 @@ uint8_t RoboMotor::attach(int pin, int frequency) {
 }
 
 uint8_t RoboMotor::attach(int pin, int frequency, uint8_t resolution) {
-#if defined(ROBOMOTOR_PLATFORM_AVR)
+#if defined(ROBOMOTOR_PLATFORM_AVR) \
+ || defined(ROBOMOTOR_PLATFORM_RENESAS) \
+ || defined(ROBOMOTOR_PLATFORM_MBED) \
+ || defined(ROBOMOTOR_PLATFORM_ZEPHYR)
     (void)pin;
     (void)frequency;
     (void)resolution;

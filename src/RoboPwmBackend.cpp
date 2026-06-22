@@ -7,13 +7,26 @@
  * ArduinoNRF nRF52: Uses nrfPwmSetPinFrequency + analogWrite (per-pin frequency groups)
  * Generic nRF52 / RP2040 / STM32: Uses analogWrite with shared frequency
  * AVR: Timer1 ISR pulse scheduler (RoboAvrBackend)
+ * Renesas UNO R4: FSP PWM with microsecond period (RoboRenesasBackend)
+ * Mbed: 20 ms Ticker frame (RoboMbedBackend)
+ * Zephyr: counter_servo scheduler (RoboZephyrBackend)
  */
 
 #include "RoboPlatform.h"
+#include "RoboServo.h"
 #include "RoboPwmBackend.h"
 
 #if defined(ROBOSERVO_PLATFORM_AVR)
     #include "RoboAvrBackend.h"
+#endif
+#if defined(ROBOSERVO_PLATFORM_RENESAS)
+    #include "RoboRenesasBackend.h"
+#endif
+#if defined(ROBOSERVO_PLATFORM_MBED)
+    #include "RoboMbedBackend.h"
+#endif
+#if defined(ROBOSERVO_PLATFORM_ZEPHYR)
+    #include "RoboZephyrBackend.h"
 #endif
 
 #if defined(ROBOSERVO_PLATFORM_ESP32)
@@ -29,6 +42,7 @@ static uint64_t _usedPinMask = 0;
 
 #if defined(ROBOSERVO_PLATFORM_ESP8266) \
  || defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
+ || defined(ROBOSERVO_PLATFORM_NRF53_GENERIC) \
  || defined(ROBOSERVO_PLATFORM_RP2040) \
  || defined(ROBOSERVO_PLATFORM_STM32)
 static int _analogGlobalFreq = 0;
@@ -63,6 +77,7 @@ bool isValidPwmPin(int pin) {
 #elif defined(ROBOSERVO_PLATFORM_NRF52_ARDUINONRF)
     return nrfDigitalPinHasPwm((uint8_t)pin);
 #elif defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
+   || defined(ROBOSERVO_PLATFORM_NRF53_GENERIC) \
    || defined(ROBOSERVO_PLATFORM_RP2040) \
    || defined(ROBOSERVO_PLATFORM_STM32)
     #ifdef digitalPinHasPWM
@@ -70,6 +85,12 @@ bool isValidPwmPin(int pin) {
     #else
     return pin >= 0 && pin < 48;
     #endif
+#elif defined(ROBOSERVO_PLATFORM_RENESAS)
+    return RoboRenesasBackend::isValidPin(pin);
+#elif defined(ROBOSERVO_PLATFORM_MBED)
+    return RoboMbedBackend::isValidPin(pin);
+#elif defined(ROBOSERVO_PLATFORM_ZEPHYR)
+    return RoboZephyrBackend::isSupported() && RoboZephyrBackend::isValidPin(pin);
 #elif defined(ROBOSERVO_PLATFORM_AVR)
     return RoboAvrBackend::isValidPin(pin);
 #elif defined(CONFIG_IDF_TARGET_ESP32P4)
@@ -108,8 +129,15 @@ void markPinFree(int pin) {
 bool attachPin(int pin, uint8_t hwChannel, int frequency, uint8_t resolution, RoboPwmDomain domain) {
 #if defined(ROBOSERVO_PLATFORM_AVR)
     return RoboAvrBackend::attachChannel(hwChannel, pin, frequency, domain);
+#elif defined(ROBOSERVO_PLATFORM_RENESAS)
+    return RoboRenesasBackend::attachChannel(hwChannel, pin, frequency, domain);
+#elif defined(ROBOSERVO_PLATFORM_MBED)
+    return RoboMbedBackend::attachChannel(hwChannel, pin, frequency, domain);
+#elif defined(ROBOSERVO_PLATFORM_ZEPHYR)
+    return RoboZephyrBackend::attachChannel(hwChannel, pin, frequency, domain);
 #elif defined(ROBOSERVO_PLATFORM_ESP8266) \
  || defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
+ || defined(ROBOSERVO_PLATFORM_NRF53_GENERIC) \
  || defined(ROBOSERVO_PLATFORM_RP2040) \
  || defined(ROBOSERVO_PLATFORM_STM32)
     (void)hwChannel;
@@ -152,6 +180,18 @@ void detachPin(int pin, uint8_t hwChannel, RoboPwmDomain domain) {
     (void)pin;
     (void)domain;
     RoboAvrBackend::detachChannel(hwChannel);
+#elif defined(ROBOSERVO_PLATFORM_RENESAS)
+    (void)pin;
+    (void)domain;
+    RoboRenesasBackend::detachChannel(hwChannel);
+#elif defined(ROBOSERVO_PLATFORM_MBED)
+    (void)pin;
+    (void)domain;
+    RoboMbedBackend::detachChannel(hwChannel);
+#elif defined(ROBOSERVO_PLATFORM_ZEPHYR)
+    (void)pin;
+    (void)domain;
+    RoboZephyrBackend::detachChannel(hwChannel);
 #elif defined(ROBOSERVO_USE_PWM_BACKEND)
     (void)hwChannel;
     (void)domain;
@@ -173,7 +213,19 @@ void writeDuty(int pin, uint8_t hwChannel, uint32_t duty, RoboPwmDomain domain) 
 #if defined(ROBOSERVO_PLATFORM_AVR)
     (void)pin;
     (void)domain;
-    RoboAvrBackend::writeDuty(hwChannel, duty, 0, 8);
+    RoboAvrBackend::writeDuty(hwChannel, duty, 0, ROBOSERVO_PWM_RESOLUTION);
+#elif defined(ROBOSERVO_PLATFORM_RENESAS)
+    (void)pin;
+    (void)domain;
+    RoboRenesasBackend::writeDuty(hwChannel, duty, 0, ROBOSERVO_PWM_RESOLUTION);
+#elif defined(ROBOSERVO_PLATFORM_MBED)
+    (void)pin;
+    (void)domain;
+    RoboMbedBackend::writeDuty(hwChannel, duty, 0, ROBOSERVO_PWM_RESOLUTION);
+#elif defined(ROBOSERVO_PLATFORM_ZEPHYR)
+    (void)pin;
+    (void)domain;
+    RoboZephyrBackend::writeDuty(hwChannel, duty, 0, ROBOSERVO_PWM_RESOLUTION);
 #elif defined(ROBOSERVO_USE_PWM_BACKEND)
     (void)hwChannel;
     (void)domain;

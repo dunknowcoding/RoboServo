@@ -1,10 +1,10 @@
 <p align="center">
   <h1 align="center">🤖 RoboServo</h1>
   <p align="center">
-    <strong>A lightweight servo control library for ESP32, ESP8266, nRF52, RP2040, STM32, and AVR</strong>
+    <strong>A lightweight servo control library for ESP32, ESP8266, nRF52/nRF53, RP2040, STM32, AVR, UNO R4, UNO Q, and Mbed</strong>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/version-0.4.0-blue?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.5.0-blue?style=flat-square" alt="Version">
     <img src="https://img.shields.io/badge/ESP32-supported-blue?style=flat-square" alt="ESP32">
     <img src="https://img.shields.io/badge/ESP32--S2/S3-supported-blue?style=flat-square" alt="ESP32-S2/S3">
     <img src="https://img.shields.io/badge/ESP32--C3/C6/H2-supported-blue?style=flat-square" alt="ESP32-C3/C6/H2">
@@ -14,6 +14,9 @@
     <img src="https://img.shields.io/badge/RP2040-supported-purple?style=flat-square" alt="RP2040">
     <img src="https://img.shields.io/badge/STM32-supported-red?style=flat-square" alt="STM32">
     <img src="https://img.shields.io/badge/AVR-supported-yellow?style=flat-square" alt="AVR">
+    <img src="https://img.shields.io/badge/UNO%20R4-supported-green?style=flat-square" alt="UNO R4">
+    <img src="https://img.shields.io/badge/UNO%20Q-supported-green?style=flat-square" alt="UNO Q">
+    <img src="https://img.shields.io/badge/Mbed-supported-blue?style=flat-square" alt="Mbed">
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License">
   </p>
 </p>
@@ -50,6 +53,10 @@
 | STM32 | 6 | 10-bit | ✅ |
 | AVR (UNO/Nano) | 6 | 8-bit (ISR) | ✅ |
 | AVR (Mega) | 12 | 8-bit (ISR) | ✅ |
+| UNO R4 Minima / WiFi | 8 | 10-bit | ✅ |
+| UNO Q | 6 | 10-bit | ✅ |
+| Mbed (Nano 33 BLE) | 8 | 10-bit | ✅ |
+| nRF5340 (generic core) | 6 | 10-bit | ✅ |
 
 ### High-Speed PWM Outputs (RoboMotor)
 
@@ -65,6 +72,7 @@
 | RP2040 / RP2350 | 2 | 20 kHz | 10-bit | ❌ (shared frequency) |
 | STM32 | 2 | 20 kHz | 10-bit | ❌ (shared frequency) |
 | AVR | — | — | — | ❌ (servo only) |
+| UNO R4 / UNO Q / Mbed | — | — | — | ❌ (servo only) |
 
 ---
 
@@ -331,6 +339,10 @@ servo.stop();         // Stop rotation
 | RP2040 / RP2350 | PWM-capable pins (`digitalPinHasPWM`) |
 | STM32 | PWM-capable pins (`digitalPinHasPWM`) |
 | AVR (UNO/Nano/Mega) | Any digital pin (Timer1 ISR) |
+| UNO R4 | PWM-capable pins (`digitalPinHasPWM`) |
+| UNO Q | Digital pins with `counter_servo` support |
+| Mbed (Nano 33 BLE) | Any digital pin (20 ms Ticker frame) |
+| nRF5340 DK | PWM-capable pins (core-dependent) |
 
 ---
 
@@ -377,6 +389,18 @@ RoboServo uses PWM at 50Hz by default. Conflicts may occur if `analogWrite()` us
 - Do not mix with `Tone()` or the Arduino `Servo` library in the same sketch
 - **RoboMotor is not supported on AVR** — use RoboServo for 50Hz hobby servos only
 
+**UNO R4 / UNO Q / Mbed Notes:**
+- UNO R4 uses FSP PWM with a 20 ms frame configured in microseconds
+- UNO Q requires the board `counter_servo` device (provided on the UNO Q variant)
+- Mbed boards use a 20 ms Ticker + GPIO pulse backend (not `analogWrite` at 500 Hz)
+- **UNO Q:** install `Arduino_RouterBridge` from Library Manager (required by the Zephyr core)
+- **RoboMotor is not supported** on UNO R4, UNO Q, Mbed, or AVR
+
+**nRF5340 Notes:**
+- Detected via `ARDUINO_ARCH_NRF53` / `NRF5340_XXAA` macros
+- Mbed and Zephyr nRF5340 cores use the Mbed/Zephyr backends above
+- Other nRF5340 Arduino cores fall back to shared-frequency `analogWrite`
+
 **RoboMotor on ESP32:**
 - Motor outputs use a separate LEDC channel group (above channel 7) to avoid interfering with 50Hz servos
 - See [ServoAndMotor](examples/ServoAndMotor) for mixed low-speed servo + high-speed motor usage
@@ -388,6 +412,7 @@ RoboServo uses PWM at 50Hz by default. Conflicts may occur if `analogWrite()` us
 | Example | Description |
 |:--------|:------------|
 | [BasicServo](examples/BasicServo) | Single servo sweep |
+| [PlatformSmoke](examples/PlatformSmoke) | Minimal attach/write (no Serial, for UNO Q / CI) |
 | [MultipleServos](examples/MultipleServos) | Independent multi-servo control |
 | [ServoGroup](examples/ServoGroup) | Coordinated group movements |
 | [Servo360](examples/Servo360) | Continuous rotation control |
@@ -425,5 +450,5 @@ MIT License — see [LICENSE](LICENSE) for details.
   Made with ❤️ for the embedded robotics community
 </p>
 <p align="center">
-  <sub>v0.4.0 • Supports ESP32, ESP32-S2/S3, ESP32-C3/C6/H2, ESP32-P4, ESP8266, nRF52, RP2040, STM32, AVR</sub>
+  <sub>v0.5.0 • Supports ESP32, ESP8266, nRF52/nRF53, RP2040, STM32, AVR, UNO R4, UNO Q, Mbed</sub>
 </p>

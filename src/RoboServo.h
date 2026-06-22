@@ -6,8 +6,8 @@
  * @version 1.1.0
  * @license MIT
  * 
- * Supported boards: ESP32 family, ESP8266, ArduinoNRF (nRF52), Adafruit/nRF52 DK,
- *                    RP2040/RP2350, STM32, AVR (UNO/Nano/Mega)
+ * Supported boards: ESP32 family, ESP8266, ArduinoNRF (nRF52/nRF53), Adafruit/Nordic DK,
+ *                    RP2040/RP2350, STM32, AVR, UNO R4, UNO Q, Mbed (Nano 33 BLE)
  * 
  * Features:
  *   - Simple Arduino Servo-style API
@@ -40,6 +40,18 @@
     #define ROBOSERVO_PWM_RESOLUTION 10  ///< Generic nRF52: shared-frequency analogWrite
 #elif defined(ROBOSERVO_PLATFORM_RP2040)
     #define ROBOSERVO_MAX_SERVOS 8
+    #define ROBOSERVO_PWM_RESOLUTION 10
+#elif defined(ROBOSERVO_PLATFORM_NRF53_GENERIC)
+    #define ROBOSERVO_MAX_SERVOS 6
+    #define ROBOSERVO_PWM_RESOLUTION 10
+#elif defined(ROBOSERVO_PLATFORM_RENESAS)
+    #define ROBOSERVO_MAX_SERVOS 8
+    #define ROBOSERVO_PWM_RESOLUTION 10
+#elif defined(ROBOSERVO_PLATFORM_MBED)
+    #define ROBOSERVO_MAX_SERVOS 8
+    #define ROBOSERVO_PWM_RESOLUTION 10
+#elif defined(ROBOSERVO_PLATFORM_ZEPHYR)
+    #define ROBOSERVO_MAX_SERVOS 6
     #define ROBOSERVO_PWM_RESOLUTION 10
 #elif defined(ROBOSERVO_PLATFORM_STM32)
     #define ROBOSERVO_MAX_SERVOS 6
