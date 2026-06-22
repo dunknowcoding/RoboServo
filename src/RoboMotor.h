@@ -6,7 +6,8 @@
  * @version 1.2.0
  * @license MIT
  *
- * Supported boards: ESP32, ESP32-S2, ESP32-S3, ESP32-C3, ESP32-C6, ESP32-H2, ESP32-P4, ESP8266
+ * Supported boards: ESP32 family, ESP8266, ArduinoNRF (nRF52), Adafruit/nRF52 DK,
+ *                    RP2040/RP2350, STM32
  *
  * Features:
  *   - kHz-range PWM for motor drivers and ESC enable inputs
@@ -20,18 +21,25 @@
 #define ROBOMOTOR_H
 
 #include <Arduino.h>
+#include "RoboPlatform.h"
 #include "RoboPwmBackend.h"
 
 // =============================================================================
-// Platform Detection
+// RoboMotor Platform Aliases
 // =============================================================================
 
-#if defined(ESP8266)
+#if defined(ROBOSERVO_PLATFORM_ESP8266)
     #define ROBOMOTOR_PLATFORM_ESP8266
-#elif defined(ESP32)
+#elif defined(ROBOSERVO_PLATFORM_ESP32)
     #define ROBOMOTOR_PLATFORM_ESP32
-#else
-    #error "RoboMotor library only supports ESP32 and ESP8266 boards"
+#elif defined(ROBOSERVO_PLATFORM_NRF52_ARDUINONRF)
+    #define ROBOMOTOR_PLATFORM_NRF52_ARDUINONRF
+#elif defined(ROBOSERVO_PLATFORM_NRF52_GENERIC)
+    #define ROBOMOTOR_PLATFORM_NRF52_GENERIC
+#elif defined(ROBOSERVO_PLATFORM_RP2040)
+    #define ROBOMOTOR_PLATFORM_RP2040
+#elif defined(ROBOSERVO_PLATFORM_STM32)
+    #define ROBOMOTOR_PLATFORM_STM32
 #endif
 
 // =============================================================================
@@ -41,6 +49,16 @@
 /** Motor channel pool — uses upper LEDC channels to avoid 50Hz servo timers (ESP32) */
 #if defined(ROBOMOTOR_PLATFORM_ESP8266)
     #define ROBOMOTOR_MAX_MOTORS      4
+    #define ROBOMOTOR_CHANNEL_BASE    0
+    #define ROBOMOTOR_PWM_RESOLUTION  10
+#elif defined(ROBOMOTOR_PLATFORM_NRF52_ARDUINONRF)
+    #define ROBOMOTOR_MAX_MOTORS      4
+    #define ROBOMOTOR_CHANNEL_BASE    0
+    #define ROBOMOTOR_PWM_RESOLUTION  10
+#elif defined(ROBOMOTOR_PLATFORM_NRF52_GENERIC) \
+   || defined(ROBOMOTOR_PLATFORM_RP2040) \
+   || defined(ROBOMOTOR_PLATFORM_STM32)
+    #define ROBOMOTOR_MAX_MOTORS      2
     #define ROBOMOTOR_CHANNEL_BASE    0
     #define ROBOMOTOR_PWM_RESOLUTION  10
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)

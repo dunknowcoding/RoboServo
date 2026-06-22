@@ -1,9 +1,9 @@
 /**
  * @file RoboServo.cpp
- * @brief Implementation for ESP32 and ESP8266 servo control
+ * @brief Implementation for ESP32, ESP8266, nRF52, RP2040, and STM32 servo control
  * 
  * ESP32: Uses LEDC peripheral for PWM
- * ESP8266: Uses analogWrite with custom frequency
+ * All other platforms: Uses RoboPwmBackend (analogWrite / nrfPwmSetPinFrequency)
  */
 
 #include "RoboServo.h"
@@ -21,9 +21,7 @@
     static portMUX_TYPE _channelMux = portMUX_INITIALIZER_UNLOCKED;
     #define ROBOSERVO_ENTER_CRITICAL() portENTER_CRITICAL(&_channelMux)
     #define ROBOSERVO_EXIT_CRITICAL()  portEXIT_CRITICAL(&_channelMux)
-    
-#elif defined(ROBOSERVO_PLATFORM_ESP8266)
-    // ESP8266 doesn't need critical sections for single-core
+#else
     #define ROBOSERVO_ENTER_CRITICAL()
     #define ROBOSERVO_EXIT_CRITICAL()
 #endif
@@ -52,9 +50,10 @@ RoboServo::~RoboServo() {
 // Static helpers
 void RoboServo::initTimer() {
     if (!_timerInitialized) {
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
-        analogWriteFreq(ROBOSERVO_DEFAULT_FREQUENCY);
+#if defined(ROBOSERVO_USE_PWM_BACKEND)
+        #ifdef analogWriteResolution
         analogWriteResolution(ROBOSERVO_PWM_RESOLUTION);
+        #endif
 #endif
         _timerInitialized = true;
     }
@@ -139,10 +138,13 @@ uint8_t RoboServo::attach(int pin, int minPulseUs, int maxPulseUs, RoboServoType
     _servoType = servoType;
     _maxAngle = (servoType == SERVO_TYPE_CUSTOM) ? _maxAngle : (int)servoType;
     
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
-    // ESP8266: Use analogWrite with frequency setting
-    analogWriteFreq(_frequency);
-    pinMode(_pin, OUTPUT);
+#if defined(ROBOSERVO_USE_PWM_BACKEND)
+    if (!RoboPwmBackend::attachPin(_pin, _channel, _frequency, ROBOSERVO_PWM_RESOLUTION, ROBOPWM_DOMAIN_SERVO)) {
+        releaseChannel(_channel);
+        _channel = ROBOSERVO_INVALID_SERVO;
+        _pin = -1;
+        return ROBOSERVO_INVALID_SERVO;
+    }
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     // ESP32 Arduino Core 3.x
     if (!ledcAttach(_pin, _frequency, ROBOSERVO_PWM_RESOLUTION)) {
@@ -167,8 +169,8 @@ uint8_t RoboServo::attach(int pin, int minPulseUs, int maxPulseUs, RoboServoType
     _currentPulseUs = ROBOSERVO_DEFAULT_CENTER_PULSE_US;
     uint32_t duty = microsecondsToTicks(_currentPulseUs);
     
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
-    analogWrite(_pin, duty);
+#if defined(ROBOSERVO_USE_PWM_BACKEND)
+    RoboPwmBackend::writeDuty(_pin, _channel, duty, ROBOPWM_DOMAIN_SERVO);
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcWrite(_pin, duty);
 #else
@@ -182,9 +184,8 @@ uint8_t RoboServo::attach(int pin, int minPulseUs, int maxPulseUs, RoboServoType
 void RoboServo::detach() {
     if (!_attached) return;
     
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
-    analogWrite(_pin, 0);
-    pinMode(_pin, INPUT);
+#if defined(ROBOSERVO_USE_PWM_BACKEND)
+    RoboPwmBackend::detachPin(_pin, _channel, ROBOPWM_DOMAIN_SERVO);
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcWrite(_pin, 0);
     ledcDetach(_pin);
@@ -227,8 +228,8 @@ void RoboServo::writeMicroseconds(int pulseUs) {
     _currentPulseUs = pulseUs;
     uint32_t duty = microsecondsToTicks(pulseUs);
     
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
-    analogWrite(_pin, duty);
+#if defined(ROBOSERVO_USE_PWM_BACKEND)
+    RoboPwmBackend::writeDuty(_pin, _channel, duty, ROBOPWM_DOMAIN_SERVO);
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcWrite(_pin, duty);
 #else
@@ -296,8 +297,8 @@ void RoboServo::stop() {
 
 void RoboServo::release() {
     if (!_attached) return;
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
-    analogWrite(_pin, 0);
+#if defined(ROBOSERVO_USE_PWM_BACKEND)
+    RoboPwmBackend::writeDuty(_pin, _channel, 0, ROBOPWM_DOMAIN_SERVO);
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcWrite(_pin, 0);
 #else

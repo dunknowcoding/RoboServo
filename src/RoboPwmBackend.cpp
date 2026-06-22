@@ -1,18 +1,14 @@
 /**
  * @file RoboPwmBackend.cpp
- * @brief Internal PWM backend for ESP32 and ESP8266
+ * @brief Internal PWM backend for ESP32, ESP8266, nRF52, RP2040, and STM32
  *
  * ESP32: Uses LEDC peripheral for PWM
  * ESP8266: Uses analogWrite with custom frequency
+ * ArduinoNRF nRF52: Uses nrfPwmSetPinFrequency + analogWrite (per-pin frequency groups)
+ * Generic nRF52 / RP2040 / STM32: Uses analogWrite with shared frequency
  */
 
-// Platform detection must precede the header (conditional declarations)
-#if defined(ESP8266)
-    #define ROBOSERVO_PLATFORM_ESP8266
-#elif defined(ESP32)
-    #define ROBOSERVO_PLATFORM_ESP32
-#endif
-
+#include "RoboPlatform.h"
 #include "RoboPwmBackend.h"
 
 #if defined(ROBOSERVO_PLATFORM_ESP32)
@@ -21,18 +17,36 @@
 #endif
 
 // =============================================================================
-// Platform Detection (mirror RoboServo.h)
-// =============================================================================
-
-// =============================================================================
 // Shared Pin Registry
 // =============================================================================
 
 static uint64_t _usedPinMask = 0;
 
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
-static int _esp8266GlobalFreq = 0;
+#if defined(ROBOSERVO_PLATFORM_ESP8266) \
+ || defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
+ || defined(ROBOSERVO_PLATFORM_RP2040) \
+ || defined(ROBOSERVO_PLATFORM_STM32)
+static int _analogGlobalFreq = 0;
 #endif
+
+namespace {
+
+bool setAnalogFrequency(int frequency) {
+#if defined(ROBOSERVO_PLATFORM_ESP8266)
+    analogWriteFreq(frequency);
+    return true;
+#elif defined(analogWriteFrequency)
+    return analogWriteFrequency((uint32_t)frequency);
+#elif defined(analogWritePeriodUs)
+    if (frequency <= 0) return false;
+    return analogWritePeriodUs(1000000UL / (uint32_t)frequency);
+#else
+    (void)frequency;
+    return true;
+#endif
+}
+
+} // namespace
 
 namespace RoboPwmBackend {
 
@@ -41,6 +55,16 @@ bool isValidPwmPin(int pin) {
 
 #if defined(ROBOSERVO_PLATFORM_ESP8266)
     return (pin >= 0 && pin <= 5) || (pin >= 12 && pin <= 16);
+#elif defined(ROBOSERVO_PLATFORM_NRF52_ARDUINONRF)
+    return nrfDigitalPinHasPwm((uint8_t)pin);
+#elif defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
+   || defined(ROBOSERVO_PLATFORM_RP2040) \
+   || defined(ROBOSERVO_PLATFORM_STM32)
+    #ifdef digitalPinHasPWM
+    return digitalPinHasPWM(pin);
+    #else
+    return pin >= 0 && pin < 48;
+    #endif
 #elif defined(CONFIG_IDF_TARGET_ESP32P4)
     return (pin >= 0 && pin <= 54) && (pin != 24) && (pin != 25);
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -75,12 +99,26 @@ void markPinFree(int pin) {
 }
 
 bool attachPin(int pin, uint8_t hwChannel, int frequency, uint8_t resolution, RoboPwmDomain domain) {
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
+#if defined(ROBOSERVO_PLATFORM_ESP8266) \
+ || defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
+ || defined(ROBOSERVO_PLATFORM_RP2040) \
+ || defined(ROBOSERVO_PLATFORM_STM32)
     (void)hwChannel;
     (void)domain;
-    if (_esp8266GlobalFreq != frequency) {
-        analogWriteFreq(frequency);
-        _esp8266GlobalFreq = frequency;
+    if (_analogGlobalFreq != frequency) {
+        if (!setAnalogFrequency(frequency)) return false;
+        _analogGlobalFreq = frequency;
+    }
+    #ifdef analogWriteResolution
+    analogWriteResolution(resolution);
+    #endif
+    pinMode(pin, OUTPUT);
+    return true;
+#elif defined(ROBOSERVO_PLATFORM_NRF52_ARDUINONRF)
+    (void)hwChannel;
+    (void)domain;
+    if (!nrfPwmSetPinFrequency((uint8_t)pin, (uint32_t)frequency)) {
+        return false;
     }
     analogWriteResolution(resolution);
     pinMode(pin, OUTPUT);
@@ -101,7 +139,7 @@ bool attachPin(int pin, uint8_t hwChannel, int frequency, uint8_t resolution, Ro
 }
 
 void detachPin(int pin, uint8_t hwChannel, RoboPwmDomain domain) {
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
+#if defined(ROBOSERVO_USE_PWM_BACKEND)
     (void)hwChannel;
     (void)domain;
     analogWrite(pin, 0);
@@ -119,7 +157,7 @@ void detachPin(int pin, uint8_t hwChannel, RoboPwmDomain domain) {
 }
 
 void writeDuty(int pin, uint8_t hwChannel, uint32_t duty, RoboPwmDomain domain) {
-#if defined(ROBOSERVO_PLATFORM_ESP8266)
+#if defined(ROBOSERVO_USE_PWM_BACKEND)
     (void)hwChannel;
     (void)domain;
     analogWrite(pin, duty);

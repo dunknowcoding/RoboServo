@@ -1,15 +1,18 @@
 <p align="center">
   <h1 align="center">🤖 RoboServo</h1>
   <p align="center">
-    <strong>A lightweight servo control library for ESP32 and ESP8266</strong>
+    <strong>A lightweight servo control library for ESP32, ESP8266, nRF52, RP2040, and STM32</strong>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/version-0.2.0-blue?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.3.0-blue?style=flat-square" alt="Version">
     <img src="https://img.shields.io/badge/ESP32-supported-blue?style=flat-square" alt="ESP32">
     <img src="https://img.shields.io/badge/ESP32--S2/S3-supported-blue?style=flat-square" alt="ESP32-S2/S3">
     <img src="https://img.shields.io/badge/ESP32--C3/C6/H2-supported-blue?style=flat-square" alt="ESP32-C3/C6/H2">
     <img src="https://img.shields.io/badge/ESP32--P4-supported-blue?style=flat-square" alt="ESP32-P4">
     <img src="https://img.shields.io/badge/ESP8266-supported-orange?style=flat-square" alt="ESP8266">
+    <img src="https://img.shields.io/badge/nRF52-supported-teal?style=flat-square" alt="nRF52">
+    <img src="https://img.shields.io/badge/RP2040-supported-purple?style=flat-square" alt="RP2040">
+    <img src="https://img.shields.io/badge/STM32-supported-red?style=flat-square" alt="STM32">
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License">
   </p>
 </p>
@@ -40,6 +43,10 @@
 | ESP32-H2 | 6 | 14-bit | ✅ |
 | ESP32-P4 | 8 | 14-bit | ✅ |
 | ESP8266 | 8 | 10-bit | ✅ |
+| ArduinoNRF nRF52 | 8 | 10-bit | ✅ |
+| Adafruit / nRF52 DK | 6 | 10-bit | ✅ |
+| RP2040 / RP2350 | 8 | 10-bit | ✅ |
+| STM32 | 6 | 10-bit | ✅ |
 
 ### High-Speed PWM Outputs (RoboMotor)
 
@@ -50,6 +57,10 @@
 | ESP32-C3 / C6 / H2 | 2 | 20 kHz | 10-bit | ✅ |
 | ESP32-P4 | 4 | 20 kHz | 10-bit | ✅ |
 | ESP8266 | 4 | 20 kHz | 10-bit | ❌ (global single frequency) |
+| ArduinoNRF nRF52 | 4 | 20 kHz | 10-bit | ✅ (per-pin frequency groups) |
+| Adafruit / nRF52 DK | 2 | 20 kHz | 10-bit | ❌ (shared frequency) |
+| RP2040 / RP2350 | 2 | 20 kHz | 10-bit | ❌ (shared frequency) |
+| STM32 | 2 | 20 kHz | 10-bit | ❌ (shared frequency) |
 
 ---
 
@@ -58,7 +69,7 @@
 ### Installation
 
 **Arduino IDE 2.x (Library Manager):**  
-Select an **ESP32** or **ESP8266** board, then `Tools` → `Manage Libraries…` → search **RoboServo** → Install.
+Select an **ESP32**, **ESP8266**, **nRF52**, **RP2040**, or **STM32** board, then `Tools` → `Manage Libraries…` → search **RoboServo** → Install.
 
 **Arduino IDE (ZIP):**  
 `Sketch` → `Include Library` → `Add .ZIP Library...`
@@ -311,6 +322,10 @@ servo.stop();         // Stop rotation
 | ESP32-H2 | 0-14, 25-27 |
 | ESP32-P4 | 0-54 (except 24-25) |
 | ESP8266 | 0-5, 12-16 |
+| ArduinoNRF nRF52 | PWM-capable pins (see board variant) |
+| Adafruit / nRF52 DK | PWM-capable pins (see core docs) |
+| RP2040 / RP2350 | PWM-capable pins (`digitalPinHasPWM`) |
+| STM32 | PWM-capable pins (`digitalPinHasPWM`) |
 
 ---
 
@@ -345,6 +360,12 @@ RoboServo uses PWM at 50Hz by default. Conflicts may occur if `analogWrite()` us
 - RoboServo sets the global PWM frequency on `attach()`
 - For best results, use the same frequency for all PWM outputs
 - **RoboMotor cannot run alongside RoboServo** — pick one domain per sketch
+
+**nRF52 / RP2040 / STM32 Notes:**
+- ArduinoNRF boards use per-pin frequency groups via `nrfPwmSetPinFrequency`
+- Adafruit nRF52, RP2040, and STM32 cores share a single PWM frequency per sketch
+- RoboServo sets frequency on `attach()`; avoid mixing different frequencies
+- **RoboMotor on shared-frequency cores** is limited to 2 outputs and cannot mix 50Hz servo with 20kHz motor
 
 **RoboMotor on ESP32:**
 - Motor outputs use a separate LEDC channel group (above channel 7) to avoid interfering with 50Hz servos
@@ -391,8 +412,8 @@ MIT License — see [LICENSE](LICENSE) for details.
 ---
 
 <p align="center">
-  Made with ❤️ for the ESP32 & ESP8266 community
+  Made with ❤️ for the embedded robotics community
 </p>
 <p align="center">
-  <sub>v0.2.0 • Supports ESP32, ESP32-S2/S3, ESP32-C3/C6/H2, ESP32-P4, ESP8266</sub>
+  <sub>v0.3.0 • Supports ESP32, ESP32-S2/S3, ESP32-C3/C6/H2, ESP32-P4, ESP8266, nRF52, RP2040, STM32</sub>
 </p>

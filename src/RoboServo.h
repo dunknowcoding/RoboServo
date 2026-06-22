@@ -6,7 +6,8 @@
  * @version 1.1.0
  * @license MIT
  * 
- * Supported boards: ESP32, ESP32-S2, ESP32-S3, ESP32-C3, ESP32-C6, ESP32-H2, ESP32-P4, ESP8266
+ * Supported boards: ESP32 family, ESP8266, ArduinoNRF (nRF52), Adafruit/nRF52 DK,
+ *                    RP2040/RP2350, STM32
  * 
  * Features:
  *   - Simple Arduino Servo-style API
@@ -21,18 +22,7 @@
 #define ROBOSERVO_H
 
 #include <Arduino.h>
-
-// =============================================================================
-// Platform Detection
-// =============================================================================
-
-#if defined(ESP8266)
-    #define ROBOSERVO_PLATFORM_ESP8266
-#elif defined(ESP32)
-    #define ROBOSERVO_PLATFORM_ESP32
-#else
-    #error "RoboServo library only supports ESP32 and ESP8266 boards"
-#endif
+#include "RoboPlatform.h"
 
 // =============================================================================
 // Configuration Constants
@@ -42,6 +32,18 @@
 #if defined(ROBOSERVO_PLATFORM_ESP8266)
     #define ROBOSERVO_MAX_SERVOS 8
     #define ROBOSERVO_PWM_RESOLUTION 10  ///< ESP8266: 10-bit resolution
+#elif defined(ROBOSERVO_PLATFORM_NRF52_ARDUINONRF)
+    #define ROBOSERVO_MAX_SERVOS 8
+    #define ROBOSERVO_PWM_RESOLUTION 10  ///< ArduinoNRF: 10-bit PWM (nrfPwmSetPinFrequency per pin)
+#elif defined(ROBOSERVO_PLATFORM_NRF52_GENERIC)
+    #define ROBOSERVO_MAX_SERVOS 6
+    #define ROBOSERVO_PWM_RESOLUTION 10  ///< Generic nRF52: shared-frequency analogWrite
+#elif defined(ROBOSERVO_PLATFORM_RP2040)
+    #define ROBOSERVO_MAX_SERVOS 8
+    #define ROBOSERVO_PWM_RESOLUTION 10
+#elif defined(ROBOSERVO_PLATFORM_STM32)
+    #define ROBOSERVO_MAX_SERVOS 6
+    #define ROBOSERVO_PWM_RESOLUTION 10
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
     #define ROBOSERVO_MAX_SERVOS 6
     #define ROBOSERVO_PWM_RESOLUTION 14  ///< ESP32: 14-bit resolution
