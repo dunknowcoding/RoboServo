@@ -6,10 +6,15 @@
  * ESP8266: Uses analogWrite with custom frequency
  * ArduinoNRF nRF52: Uses nrfPwmSetPinFrequency + analogWrite (per-pin frequency groups)
  * Generic nRF52 / RP2040 / STM32: Uses analogWrite with shared frequency
+ * AVR: Timer1 ISR pulse scheduler (RoboAvrBackend)
  */
 
 #include "RoboPlatform.h"
 #include "RoboPwmBackend.h"
+
+#if defined(ROBOSERVO_PLATFORM_AVR)
+    #include "RoboAvrBackend.h"
+#endif
 
 #if defined(ROBOSERVO_PLATFORM_ESP32)
     #include "driver/ledc.h"
@@ -65,6 +70,8 @@ bool isValidPwmPin(int pin) {
     #else
     return pin >= 0 && pin < 48;
     #endif
+#elif defined(ROBOSERVO_PLATFORM_AVR)
+    return RoboAvrBackend::isValidPin(pin);
 #elif defined(CONFIG_IDF_TARGET_ESP32P4)
     return (pin >= 0 && pin <= 54) && (pin != 24) && (pin != 25);
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -99,7 +106,9 @@ void markPinFree(int pin) {
 }
 
 bool attachPin(int pin, uint8_t hwChannel, int frequency, uint8_t resolution, RoboPwmDomain domain) {
-#if defined(ROBOSERVO_PLATFORM_ESP8266) \
+#if defined(ROBOSERVO_PLATFORM_AVR)
+    return RoboAvrBackend::attachChannel(hwChannel, pin, frequency, domain);
+#elif defined(ROBOSERVO_PLATFORM_ESP8266) \
  || defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
  || defined(ROBOSERVO_PLATFORM_RP2040) \
  || defined(ROBOSERVO_PLATFORM_STM32)
@@ -139,7 +148,11 @@ bool attachPin(int pin, uint8_t hwChannel, int frequency, uint8_t resolution, Ro
 }
 
 void detachPin(int pin, uint8_t hwChannel, RoboPwmDomain domain) {
-#if defined(ROBOSERVO_USE_PWM_BACKEND)
+#if defined(ROBOSERVO_PLATFORM_AVR)
+    (void)pin;
+    (void)domain;
+    RoboAvrBackend::detachChannel(hwChannel);
+#elif defined(ROBOSERVO_USE_PWM_BACKEND)
     (void)hwChannel;
     (void)domain;
     analogWrite(pin, 0);
@@ -157,7 +170,11 @@ void detachPin(int pin, uint8_t hwChannel, RoboPwmDomain domain) {
 }
 
 void writeDuty(int pin, uint8_t hwChannel, uint32_t duty, RoboPwmDomain domain) {
-#if defined(ROBOSERVO_USE_PWM_BACKEND)
+#if defined(ROBOSERVO_PLATFORM_AVR)
+    (void)pin;
+    (void)domain;
+    RoboAvrBackend::writeDuty(hwChannel, duty, 0, 8);
+#elif defined(ROBOSERVO_USE_PWM_BACKEND)
     (void)hwChannel;
     (void)domain;
     analogWrite(pin, duty);

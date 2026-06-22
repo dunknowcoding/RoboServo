@@ -7,7 +7,7 @@
  * @license MIT
  *
  * Supported boards: ESP32 family, ESP8266, ArduinoNRF (nRF52), Adafruit/nRF52 DK,
- *                    RP2040/RP2350, STM32
+ *                    RP2040/RP2350, STM32 (RoboMotor not available on AVR)
  *
  * Features:
  *   - kHz-range PWM for motor drivers and ESC enable inputs
@@ -40,6 +40,8 @@
     #define ROBOMOTOR_PLATFORM_RP2040
 #elif defined(ROBOSERVO_PLATFORM_STM32)
     #define ROBOMOTOR_PLATFORM_STM32
+#elif defined(ROBOSERVO_PLATFORM_AVR)
+    #define ROBOMOTOR_PLATFORM_AVR
 #endif
 
 // =============================================================================
@@ -61,6 +63,10 @@
     #define ROBOMOTOR_MAX_MOTORS      2
     #define ROBOMOTOR_CHANNEL_BASE    0
     #define ROBOMOTOR_PWM_RESOLUTION  10
+#elif defined(ROBOMOTOR_PLATFORM_AVR)
+    #define ROBOMOTOR_MAX_MOTORS      1
+    #define ROBOMOTOR_CHANNEL_BASE    0
+    #define ROBOMOTOR_PWM_RESOLUTION  8
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
     #define ROBOMOTOR_MAX_MOTORS      2
     #define ROBOMOTOR_CHANNEL_BASE    4

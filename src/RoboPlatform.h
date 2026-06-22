@@ -6,6 +6,7 @@
  * Tier 1 — ArduinoNRF nRF52 (per-pin nrfPwmSetPinFrequency)
  * Tier 1b — Generic nRF52 (Adafruit / Nordic DK cores)
  * Tier 2 — RP2040 / STM32 (shared analogWrite backend)
+ * Tier 3 — AVR (Timer1 ISR, limited channels)
  */
 
 #ifndef ROBOPLATFORM_H
@@ -42,6 +43,8 @@
     #define ROBOSERVO_PLATFORM_RP2040
 #elif defined(ARDUINO_ARCH_STM32)
     #define ROBOSERVO_PLATFORM_STM32
+#elif defined(ARDUINO_ARCH_AVR)
+    #define ROBOSERVO_PLATFORM_AVR
 #else
     #error "RoboServo library does not support this board"
 #endif
@@ -57,6 +60,10 @@
  || defined(ROBOSERVO_PLATFORM_RP2040) \
  || defined(ROBOSERVO_PLATFORM_STM32)
     #define ROBOSERVO_USE_PWM_BACKEND
+#endif
+
+#if defined(ROBOSERVO_PLATFORM_AVR)
+    #define ROBOSERVO_USE_AVR_BACKEND
 #endif
 
 #endif // ROBOPLATFORM_H

@@ -7,7 +7,7 @@
  * @license MIT
  * 
  * Supported boards: ESP32 family, ESP8266, ArduinoNRF (nRF52), Adafruit/nRF52 DK,
- *                    RP2040/RP2350, STM32
+ *                    RP2040/RP2350, STM32, AVR (UNO/Nano/Mega)
  * 
  * Features:
  *   - Simple Arduino Servo-style API
@@ -44,6 +44,13 @@
 #elif defined(ROBOSERVO_PLATFORM_STM32)
     #define ROBOSERVO_MAX_SERVOS 6
     #define ROBOSERVO_PWM_RESOLUTION 10
+#elif defined(ROBOSERVO_PLATFORM_AVR)
+    #if defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__)
+        #define ROBOSERVO_MAX_SERVOS 12
+    #else
+        #define ROBOSERVO_MAX_SERVOS 6
+    #endif
+    #define ROBOSERVO_PWM_RESOLUTION 8  ///< AVR ISR: 8-bit logical duty scale
 #elif defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6) || defined(CONFIG_IDF_TARGET_ESP32H2)
     #define ROBOSERVO_MAX_SERVOS 6
     #define ROBOSERVO_PWM_RESOLUTION 14  ///< ESP32: 14-bit resolution

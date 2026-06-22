@@ -50,7 +50,7 @@ RoboServo::~RoboServo() {
 // Static helpers
 void RoboServo::initTimer() {
     if (!_timerInitialized) {
-#if defined(ROBOSERVO_USE_PWM_BACKEND)
+#if defined(ROBOSERVO_USE_PWM_BACKEND) || defined(ROBOSERVO_USE_AVR_BACKEND)
         #ifdef analogWriteResolution
         analogWriteResolution(ROBOSERVO_PWM_RESOLUTION);
         #endif
@@ -138,7 +138,7 @@ uint8_t RoboServo::attach(int pin, int minPulseUs, int maxPulseUs, RoboServoType
     _servoType = servoType;
     _maxAngle = (servoType == SERVO_TYPE_CUSTOM) ? _maxAngle : (int)servoType;
     
-#if defined(ROBOSERVO_USE_PWM_BACKEND)
+#if defined(ROBOSERVO_USE_PWM_BACKEND) || defined(ROBOSERVO_USE_AVR_BACKEND)
     if (!RoboPwmBackend::attachPin(_pin, _channel, _frequency, ROBOSERVO_PWM_RESOLUTION, ROBOPWM_DOMAIN_SERVO)) {
         releaseChannel(_channel);
         _channel = ROBOSERVO_INVALID_SERVO;
@@ -169,7 +169,7 @@ uint8_t RoboServo::attach(int pin, int minPulseUs, int maxPulseUs, RoboServoType
     _currentPulseUs = ROBOSERVO_DEFAULT_CENTER_PULSE_US;
     uint32_t duty = microsecondsToTicks(_currentPulseUs);
     
-#if defined(ROBOSERVO_USE_PWM_BACKEND)
+#if defined(ROBOSERVO_USE_PWM_BACKEND) || defined(ROBOSERVO_USE_AVR_BACKEND)
     RoboPwmBackend::writeDuty(_pin, _channel, duty, ROBOPWM_DOMAIN_SERVO);
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcWrite(_pin, duty);
@@ -184,7 +184,7 @@ uint8_t RoboServo::attach(int pin, int minPulseUs, int maxPulseUs, RoboServoType
 void RoboServo::detach() {
     if (!_attached) return;
     
-#if defined(ROBOSERVO_USE_PWM_BACKEND)
+#if defined(ROBOSERVO_USE_PWM_BACKEND) || defined(ROBOSERVO_USE_AVR_BACKEND)
     RoboPwmBackend::detachPin(_pin, _channel, ROBOPWM_DOMAIN_SERVO);
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcWrite(_pin, 0);
@@ -228,7 +228,7 @@ void RoboServo::writeMicroseconds(int pulseUs) {
     _currentPulseUs = pulseUs;
     uint32_t duty = microsecondsToTicks(pulseUs);
     
-#if defined(ROBOSERVO_USE_PWM_BACKEND)
+#if defined(ROBOSERVO_USE_PWM_BACKEND) || defined(ROBOSERVO_USE_AVR_BACKEND)
     RoboPwmBackend::writeDuty(_pin, _channel, duty, ROBOPWM_DOMAIN_SERVO);
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcWrite(_pin, duty);
@@ -297,7 +297,7 @@ void RoboServo::stop() {
 
 void RoboServo::release() {
     if (!_attached) return;
-#if defined(ROBOSERVO_USE_PWM_BACKEND)
+#if defined(ROBOSERVO_USE_PWM_BACKEND) || defined(ROBOSERVO_USE_AVR_BACKEND)
     RoboPwmBackend::writeDuty(_pin, _channel, 0, ROBOPWM_DOMAIN_SERVO);
 #elif defined(ESP_ARDUINO_VERSION_MAJOR) && ESP_ARDUINO_VERSION_MAJOR >= 3
     ledcWrite(_pin, 0);

@@ -1,10 +1,10 @@
 <p align="center">
   <h1 align="center">🤖 RoboServo</h1>
   <p align="center">
-    <strong>A lightweight servo control library for ESP32, ESP8266, nRF52, RP2040, and STM32</strong>
+    <strong>A lightweight servo control library for ESP32, ESP8266, nRF52, RP2040, STM32, and AVR</strong>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/version-0.3.0-blue?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/version-0.4.0-blue?style=flat-square" alt="Version">
     <img src="https://img.shields.io/badge/ESP32-supported-blue?style=flat-square" alt="ESP32">
     <img src="https://img.shields.io/badge/ESP32--S2/S3-supported-blue?style=flat-square" alt="ESP32-S2/S3">
     <img src="https://img.shields.io/badge/ESP32--C3/C6/H2-supported-blue?style=flat-square" alt="ESP32-C3/C6/H2">
@@ -13,6 +13,7 @@
     <img src="https://img.shields.io/badge/nRF52-supported-teal?style=flat-square" alt="nRF52">
     <img src="https://img.shields.io/badge/RP2040-supported-purple?style=flat-square" alt="RP2040">
     <img src="https://img.shields.io/badge/STM32-supported-red?style=flat-square" alt="STM32">
+    <img src="https://img.shields.io/badge/AVR-supported-yellow?style=flat-square" alt="AVR">
     <img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="License">
   </p>
 </p>
@@ -47,6 +48,8 @@
 | Adafruit / nRF52 DK | 6 | 10-bit | ✅ |
 | RP2040 / RP2350 | 8 | 10-bit | ✅ |
 | STM32 | 6 | 10-bit | ✅ |
+| AVR (UNO/Nano) | 6 | 8-bit (ISR) | ✅ |
+| AVR (Mega) | 12 | 8-bit (ISR) | ✅ |
 
 ### High-Speed PWM Outputs (RoboMotor)
 
@@ -61,6 +64,7 @@
 | Adafruit / nRF52 DK | 2 | 20 kHz | 10-bit | ❌ (shared frequency) |
 | RP2040 / RP2350 | 2 | 20 kHz | 10-bit | ❌ (shared frequency) |
 | STM32 | 2 | 20 kHz | 10-bit | ❌ (shared frequency) |
+| AVR | — | — | — | ❌ (servo only) |
 
 ---
 
@@ -69,7 +73,7 @@
 ### Installation
 
 **Arduino IDE 2.x (Library Manager):**  
-Select an **ESP32**, **ESP8266**, **nRF52**, **RP2040**, or **STM32** board, then `Tools` → `Manage Libraries…` → search **RoboServo** → Install.
+Select an **ESP32**, **ESP8266**, **nRF52**, **RP2040**, **STM32**, or **AVR** board, then `Tools` → `Manage Libraries…` → search **RoboServo** → Install.
 
 **Arduino IDE (ZIP):**  
 `Sketch` → `Include Library` → `Add .ZIP Library...`
@@ -326,6 +330,7 @@ servo.stop();         // Stop rotation
 | Adafruit / nRF52 DK | PWM-capable pins (see core docs) |
 | RP2040 / RP2350 | PWM-capable pins (`digitalPinHasPWM`) |
 | STM32 | PWM-capable pins (`digitalPinHasPWM`) |
+| AVR (UNO/Nano/Mega) | Any digital pin (Timer1 ISR) |
 
 ---
 
@@ -366,6 +371,11 @@ RoboServo uses PWM at 50Hz by default. Conflicts may occur if `analogWrite()` us
 - Adafruit nRF52, RP2040, and STM32 cores share a single PWM frequency per sketch
 - RoboServo sets frequency on `attach()`; avoid mixing different frequencies
 - **RoboMotor on shared-frequency cores** is limited to 2 outputs and cannot mix 50Hz servo with 20kHz motor
+
+**AVR Notes:**
+- Uses Timer1 compare interrupts (same resource as `Tone` and the built-in `Servo` library)
+- Do not mix with `Tone()` or the Arduino `Servo` library in the same sketch
+- **RoboMotor is not supported on AVR** — use RoboServo for 50Hz hobby servos only
 
 **RoboMotor on ESP32:**
 - Motor outputs use a separate LEDC channel group (above channel 7) to avoid interfering with 50Hz servos
@@ -415,5 +425,5 @@ MIT License — see [LICENSE](LICENSE) for details.
   Made with ❤️ for the embedded robotics community
 </p>
 <p align="center">
-  <sub>v0.3.0 • Supports ESP32, ESP32-S2/S3, ESP32-C3/C6/H2, ESP32-P4, ESP8266, nRF52, RP2040, STM32</sub>
+  <sub>v0.4.0 • Supports ESP32, ESP32-S2/S3, ESP32-C3/C6/H2, ESP32-P4, ESP8266, nRF52, RP2040, STM32, AVR</sub>
 </p>
