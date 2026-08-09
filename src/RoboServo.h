@@ -3,7 +3,7 @@
  * @brief Servo control library for ESP32 family and ESP8266
  * 
  * @author dunknowcoding
- * @version 1.1.0
+ * @version 1.2.0
  * @license MIT
  * 
  * Supported boards: ESP32 family, ESP8266, ArduinoNRF (nRF52/nRF53), Adafruit/Nordic DK,

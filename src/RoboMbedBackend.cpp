@@ -3,6 +3,7 @@
 #if defined(ROBOSERVO_PLATFORM_MBED)
 
 #include <mbed.h>
+#include <chrono>
 #include "RoboServo.h"
 #include "RoboMbedBackend.h"
 
@@ -19,7 +20,8 @@ public:
     void start(uint32_t pulseUs) {
         _pulseUs = pulseUs;
         if (!_running) {
-            _ticker.attach(mbed::callback(this, &MbedServoPulse::onFrame), 0.02f);
+            _ticker.attach(mbed::callback(this, &MbedServoPulse::onFrame),
+                           std::chrono::milliseconds(20));
             _running = true;
         }
     }
@@ -36,7 +38,8 @@ public:
 private:
     void onFrame() {
         _out->write(1);
-        _timeout.attach(mbed::callback(this, &MbedServoPulse::endPulse), _pulseUs / 1000000.0f);
+        _timeout.attach(mbed::callback(this, &MbedServoPulse::endPulse),
+                        std::chrono::microseconds(_pulseUs));
     }
 
     void endPulse() {
@@ -64,7 +67,7 @@ static uint32_t dutyToPulseUs(uint32_t duty, int frequency, uint8_t resolution) 
 namespace RoboMbedBackend {
 
 bool isValidPin(int pin) {
-    return pin >= 0 && pin < PINS_COUNT;
+    return pin >= 0 && pin < (int)PINS_COUNT;
 }
 
 bool attachChannel(uint8_t slot, int pin, int frequency, RoboPwmDomain domain) {

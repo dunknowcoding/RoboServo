@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  driver-api-avr:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Install pinned Arduino CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          archive=/tmp/arduino-cli_1.5.1_Linux_64bit.tar.gz
+          curl --fail --location --retry 6 --retry-all-errors --retry-delay 10 \
+            --output "$archive" \
+            https://github.com/arduino/arduino-cli/releases/download/v1.5.1/arduino-cli_1.5.1_Linux_64bit.tar.gz
+          echo "28a8e119c498a25607821c36cb2dc49e8463941b261a0d99091baa7bc692dd2b  $archive" \
+            | sha256sum --check --strict
+          mkdir -p "$HOME/.local/bin"
+          tar -xzf "$archive" -C "$HOME/.local/bin" arduino-cli
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Compile driver API examples
+        shell: bash
+        run: |
+          set -euo pipefail
+          arduino-cli core update-index
+          arduino-cli core install arduino:avr@1.8.7
+          for example in HBridgeDriver StepDirDriver FourWireStepper Pca9685Servos; do
+            arduino-cli compile --warnings all --library . \
+              -b arduino:avr:uno "examples/$example"
+          done

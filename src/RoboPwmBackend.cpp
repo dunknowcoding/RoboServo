@@ -48,6 +48,11 @@ static uint64_t _usedPinMask = 0;
 static int _analogGlobalFreq = 0;
 #endif
 
+#if defined(ROBOSERVO_PLATFORM_ESP8266) \
+ || defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
+ || defined(ROBOSERVO_PLATFORM_NRF53_GENERIC) \
+ || defined(ROBOSERVO_PLATFORM_RP2040) \
+ || defined(ROBOSERVO_PLATFORM_STM32)
 namespace {
 
 bool setAnalogFrequency(int frequency) {
@@ -66,6 +71,7 @@ bool setAnalogFrequency(int frequency) {
 }
 
 } // namespace
+#endif
 
 namespace RoboPwmBackend {
 
@@ -128,12 +134,16 @@ void markPinFree(int pin) {
 
 bool attachPin(int pin, uint8_t hwChannel, int frequency, uint8_t resolution, RoboPwmDomain domain) {
 #if defined(ROBOSERVO_PLATFORM_AVR)
+    (void)resolution;
     return RoboAvrBackend::attachChannel(hwChannel, pin, frequency, domain);
 #elif defined(ROBOSERVO_PLATFORM_RENESAS)
+    (void)resolution;
     return RoboRenesasBackend::attachChannel(hwChannel, pin, frequency, domain);
 #elif defined(ROBOSERVO_PLATFORM_MBED)
+    (void)resolution;
     return RoboMbedBackend::attachChannel(hwChannel, pin, frequency, domain);
 #elif defined(ROBOSERVO_PLATFORM_ZEPHYR)
+    (void)resolution;
     return RoboZephyrBackend::attachChannel(hwChannel, pin, frequency, domain);
 #elif defined(ROBOSERVO_PLATFORM_ESP8266) \
  || defined(ROBOSERVO_PLATFORM_NRF52_GENERIC) \
@@ -142,6 +152,7 @@ bool attachPin(int pin, uint8_t hwChannel, int frequency, uint8_t resolution, Ro
  || defined(ROBOSERVO_PLATFORM_STM32)
     (void)hwChannel;
     (void)domain;
+    (void)resolution;
     if (_analogGlobalFreq != frequency) {
         if (!setAnalogFrequency(frequency)) return false;
         _analogGlobalFreq = frequency;

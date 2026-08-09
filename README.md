@@ -4,7 +4,7 @@
     <strong>A lightweight servo control library for ESP32, ESP8266, nRF52/nRF53, RP2040, STM32, AVR, UNO R4, UNO Q, and Mbed</strong>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/version-0.5.0-blue?style=flat-square" alt="Version">
+    <img src="https://img.shields.io/badge/version-1.2.0-blue?style=flat-square" alt="Version">
     <img src="https://img.shields.io/badge/ESP32-supported-blue?style=flat-square" alt="ESP32">
     <img src="https://img.shields.io/badge/ESP32--S2/S3-supported-blue?style=flat-square" alt="ESP32-S2/S3">
     <img src="https://img.shields.io/badge/ESP32--C3/C6/H2-supported-blue?style=flat-square" alt="ESP32-C3/C6/H2">
@@ -56,6 +56,10 @@
 | UNO R4 Minima / WiFi | 8 | 10-bit | ✅ |
 | UNO Q | 6 | 10-bit | ✅ |
 | Mbed (Nano 33 BLE) | 8 | 10-bit | ✅ |
+| Mbed (Portenta H7 / X8) | 8 | 10-bit | ✅ |
+| Mbed (Nicla Sense / Vision / Voice) | 8 | 10-bit | ✅ |
+| Mbed (Giga R1 / Opta / Edge / Stella) | 8 | 10-bit | ✅ |
+| Mbed (Nano RP2040 Connect / Pico) | 8 | 10-bit | ✅ |
 | nRF5340 (generic core) | 6 | 10-bit | ✅ |
 
 ### High-Speed PWM Outputs (RoboMotor)
@@ -88,7 +92,7 @@ Select an **ESP32**, **ESP8266**, **nRF52**, **RP2040**, **STM32**, or **AVR** b
 
 **PlatformIO:**
 ```ini
-lib_deps = https://github.com/dunknowcoding/RoboServo.git#v1.1.2
+lib_deps = https://github.com/dunknowcoding/RoboServo.git#v1.2.0
 ```
 
 ### Basic Example
@@ -298,6 +302,54 @@ int read(int index);
 
 ---
 
+## Driver modules
+
+`RoboDrivers.h` adds profile-aware control for common boards between the MCU
+and the actuator. The profile prevents physically different modules from
+sharing an unsafe truth table.
+
+| API | Modules |
+|:----|:--------|
+| `RoboHBridge` | L298N, L293D, L298P shield, TB6612FNG, both common DRV8833 breakouts, DRV8871, BTS7960/IBT_2 |
+| `RoboL293DShield` | four-channel L293D/74HC595 motor shield |
+| `RoboStepDir` | A4988, DRV8825, TMC2208, TMC2209, ATD5833, TB6600 |
+| `RoboFourWireStepper` | ULN2003 with four-wire phase sequencing |
+| `RoboPca9685` | PCA9685 16-channel servo-signal board, 40-1000 Hz |
+
+The 1803BK is listed as manual-only and cannot be mounted by a control class:
+it has a potentiometer and no MCU input. `RoboStepDir` keeps the TMC2208 and
+TMC2209 standalone mode tables separate, supports high-impedance ATD5833 mode
+states, enforces the TB6600's longer pulse floor, and treats the TB6600 DIP
+setting as an externally confirmed value instead of pretending GPIO changed it.
+For an Arduino Motor Shield Rev3/L298P, pass its active-high brake pin as the
+fourth argument to `beginPwmDirection()`; `drive()` and `coast()` release it,
+while `brake()` asserts it. On an IBT-2/BTS7960, `coast()` inhibits both half
+bridges and `brake()` enables both low sides.
+
+```cpp
+#include <RoboDrivers.h>
+
+RoboHBridge motor;
+RoboStepDir axis;
+
+void setup() {
+  motor.beginIn1In2(ROBO_DRIVER_TB6612, 4, 5, 6, 7);
+  axis.begin(ROBO_DRIVER_A4988, 2, 3, 8, 9, 10, 11, 12, 13);
+  axis.setMicrosteps(16);
+}
+
+void loop() {
+  motor.drive(60);       // signed percentage; negative reverses
+  axis.step(true);       // one admitted STEP pulse
+}
+```
+
+Driver current limits, motor power, and logic power remain physical settings.
+Set A4988/DRV8825/TMC/ATD current limits before enabling the motor. Use an
+external actuator supply where required and join its ground to the MCU ground.
+
+---
+
 ## 🎛️ Servo Types
 
 ```cpp
@@ -341,7 +393,7 @@ servo.stop();         // Stop rotation
 | AVR (UNO/Nano/Mega) | Any digital pin (Timer1 ISR) |
 | UNO R4 | PWM-capable pins (`digitalPinHasPWM`) |
 | UNO Q | Digital pins with `counter_servo` support |
-| Mbed (Nano 33 BLE) | Any digital pin (20 ms Ticker frame) |
+| Mbed (Nano 33 BLE, Portenta, Nicla, etc.) | Any digital pin (20 ms Ticker frame) |
 | nRF5340 DK | PWM-capable pins (core-dependent) |
 
 ---
@@ -412,7 +464,7 @@ RoboServo uses PWM at 50Hz by default. Conflicts may occur if `analogWrite()` us
 | Example | Description |
 |:--------|:------------|
 | [BasicServo](examples/BasicServo) | Single servo sweep |
-| [PlatformSmoke](examples/PlatformSmoke) | Minimal attach/write (no Serial, for UNO Q / CI) |
+| [PlatformSmoke](examples/PlatformSmoke) | Minimal attach/write (no Serial, for UNO Q / Mbed CI) |
 | [MultipleServos](examples/MultipleServos) | Independent multi-servo control |
 | [ServoGroup](examples/ServoGroup) | Coordinated group movements |
 | [Servo360](examples/Servo360) | Continuous rotation control |
@@ -424,6 +476,10 @@ RoboServo uses PWM at 50Hz by default. Conflicts may occur if `analogWrite()` us
 | [MotorPwm](examples/MotorPwm) | 20kHz motor duty cycle ramp |
 | [MotorGroup](examples/MotorGroup) | Coordinated multi-motor control |
 | [ServoAndMotor](examples/ServoAndMotor) | 50Hz servo + 20kHz motor together |
+| [HBridgeDriver](examples/HBridgeDriver) | Signed drive, brake, and coast through a TB6612 |
+| [StepDirDriver](examples/StepDirDriver) | A4988 microstep, reset, and bounded STEP pulses |
+| [FourWireStepper](examples/FourWireStepper) | ULN2003 half-step phase sequence |
+| [Pca9685Servos](examples/Pca9685Servos) | PCA9685 servo pulse output over I2C |
 
 ---
 
@@ -450,5 +506,5 @@ MIT License — see [LICENSE](LICENSE) for details.
   Made with ❤️ for the embedded robotics community
 </p>
 <p align="center">
-  <sub>v0.5.0 • Supports ESP32, ESP8266, nRF52/nRF53, RP2040, STM32, AVR, UNO R4, UNO Q, Mbed</sub>
+  <sub>v1.2.0 • Servos, motors, H-bridges, step/dir, four-wire steppers, and PCA9685</sub>
 </p>

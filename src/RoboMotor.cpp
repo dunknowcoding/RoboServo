@@ -83,7 +83,7 @@ uint8_t RoboMotor::attach(int pin, int frequency, uint8_t resolution) {
     (void)frequency;
     (void)resolution;
     return ROBOMOTOR_INVALID;
-#endif
+#else
     if (_attached) {
         if (_pin == pin) {
             _frequency = frequency;
@@ -124,6 +124,7 @@ uint8_t RoboMotor::attach(int pin, int frequency, uint8_t resolution) {
     RoboPwmBackend::markPinUsed(_pin);
 
     return _slot;
+#endif
 }
 
 void RoboMotor::detach() {
@@ -172,6 +173,12 @@ int RoboMotor::read() const { return _currentPercent; }
 uint32_t RoboMotor::readRaw() const { return _currentDuty; }
 
 void RoboMotor::setFrequency(int frequency) {
+#if defined(ROBOMOTOR_PLATFORM_AVR) \
+ || defined(ROBOMOTOR_PLATFORM_RENESAS) \
+ || defined(ROBOMOTOR_PLATFORM_MBED) \
+ || defined(ROBOMOTOR_PLATFORM_ZEPHYR)
+    (void)frequency;
+#else
     if (frequency < ROBOMOTOR_MIN_FREQUENCY) frequency = ROBOMOTOR_MIN_FREQUENCY;
     else if (frequency > ROBOMOTOR_MAX_FREQUENCY) frequency = ROBOMOTOR_MAX_FREQUENCY;
     if (frequency == _frequency) return;
@@ -187,6 +194,7 @@ void RoboMotor::setFrequency(int frequency) {
             write(savedPercent);
         }
     }
+#endif
 }
 
 int RoboMotor::getFrequency() const { return _frequency; }
